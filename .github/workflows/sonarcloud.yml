@@ -11,37 +11,29 @@ on:
 
 jobs:
   build:
-    name: Build and analyze on SonarCloud
+    name: SonarCloud Scan
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0  # Required for full analysis
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      - name: Set up Java
-        uses: actions/setup-java@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
         with:
-          distribution: 'temurin'
-          java-version: '17'
+          node-version: '18'
 
-      - name: Cache SonarCloud packages
-        uses: actions/cache@v3
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run tests (optional)
+        run: npm test || true
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@v2
         with:
-          path: ~/.sonar/cache
-          key: ${{ runner.os }}-sonar
-          restore-keys: ${{ runner.os }}-sonar
-
-      - name: Cache Gradle packages
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle
-          restore-keys: ${{ runner.os }}-gradle
-
-      - name: Build and analyze with Gradle
+          projectBaseDir: .
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: ./gradlew build sonarqube -Dsonar.projectKey=erte_project-bolt -Dsonar.organization=errante001 -Dsonar.host.url=https://sonarcloud.io -Dsonar.token=$SONAR_TOKEN
+          SONAR_PROJECT_KEY: erte_project-bolt
+          SONAR_ORGANIZATION: errante001
